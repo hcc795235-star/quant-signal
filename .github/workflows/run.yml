@@ -32,7 +32,7 @@ jobs:
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-        run: python monitor.py --once
+        run: python signal.py --once
 
       - name: 把状态写回仓库
         if: always()
