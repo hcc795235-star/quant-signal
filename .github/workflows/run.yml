@@ -1,0 +1,45 @@
+name: sniper-bot
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sniper-bot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 拉代码
+        uses: actions/checkout@v4
+
+      - name: 装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 装依赖
+        run: pip install requests
+
+      - name: 跑一轮
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: python monitor.py --once
+
+      - name: 把状态写回仓库
+        if: always()
+        run: |
+          git config user.name "quant-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add trades.json last_report.json cycle_time.json 2>/dev/null || true
+          git commit -m "state $(date -u +%FT%TZ)" || echo "无变化"
+          git pull --rebase --autostash || true
+          git push || true
